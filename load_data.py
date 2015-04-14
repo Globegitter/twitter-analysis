@@ -32,6 +32,7 @@ def load_data():
             if nr_open_brackets == 0:
                 nr_json_objects += 1
 
+                print(chars_read)
                 tweet = pd.read_json(chars_read)
                 chars_read = ''
 
