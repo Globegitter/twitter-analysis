@@ -15,7 +15,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 from sklearn.datasets import load_files
 from sklearn.cross_validation import train_test_split
+import random
 from sklearn import metrics
+from load_data import load_data
+from pandas import Series
 
 
 if __name__ == "__main__":
@@ -26,13 +29,20 @@ if __name__ == "__main__":
     # that is used when n_jobs != 1 in GridSearchCV
 
     # the training data folder must be passed as first argument
-    movie_reviews_data_folder = 'movie_example_data'
-    dataset = load_files(movie_reviews_data_folder, shuffle=False)
-    print("n_samples: %d" % len(dataset.data))
+    # movie_reviews_data_folder = 'movie_example_data'
+    # dataset = load_files(movie_reviews_data_folder, shuffle=False)
+    # print("n_samples: %d" % len(dataset.data))
 
     # split the dataset in training and test set:
-    docs_train, docs_test, y_train, y_test = train_test_split(
-        dataset.data, dataset.target, test_size=0.25, random_state=None)
+    # docs_train, docs_test, y_train, y_test = train_test_split(
+    #     dataset.data, dataset.target, test_size=0.25, random_state=None)
+
+    # print('docs_train', docs_train)
+    # sys.exit(0)
+
+    tweets_df = load_data(100)
+    intel_tweets = tweets_df[tweets_df['Symbol'] == 'intel']['Text'].values
+    y = [round(random.uniform(0.1, 1.0), 10) for i in intel_tweets]
 
     # TASK: Build a vectorizer / classifier pipeline that filters out tokens
     # that are too rare or too frequent
@@ -47,25 +57,41 @@ if __name__ == "__main__":
     parameters = {
         'vect__ngram_range': [(1, 1), (1, 2)],
     }
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1)
-    grid_search.fit(docs_train, y_train)
+    # You can set the parameters using the names issued
+    #  For instance, fit using a k of 10 in the SelectKBest
+    #  and a parameter 'C' of the svm
+    fit_val = pipeline.set_params(vect__ngram_range=(1, 2)).fit(intel_tweets, y)
+    print('fit_val', fit_val)
+    prediction = pipeline.predict(intel_tweets)
+
+    # tweets_df[tweets_df['Symbol'] == 'intel']['text_prediction'] = Series(prediction, index=tweets_df[tweets_df['Symbol'] == 'intel'].index)
+
+    # for df in tweets_df[tweets_df['Symbol'] == 'intel']:
+    #     print(df)
+        # df['text_sentiment'] = prediction
+
+    print(tweets_df[tweets_df['Symbol'] == 'intel'])
+    # print('prediction', prediction.shape)
+    # print('len2', tweets_df[tweets_df['Symbol'] == 'intel']['Text'].values.shape)
+    # grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1)
+    # grid_search.fit(docs_train, y_train)
 
     # TASK: print the cross-validated scores for the each parameters set
     # explored by the grid search
-    print(grid_search.grid_scores_)
+    # print(grid_search.grid_scores_)
 
     # TASK: Predict the outcome on the testing set and store it in a variable
     # named y_predicted
-    y_predicted = grid_search.predict(docs_test)
+    # y_predicted = grid_search.predict(docs_test)
 
     # Print the classification report
-    print(metrics.classification_report(y_test, y_predicted,
-                                        target_names=dataset.target_names))
+    # print(metrics.classification_report(y_test, y_predicted,
+    #                                     target_names=dataset.target_names))
 
     # Print and plot the confusion matrix
-    cm = metrics.confusion_matrix(y_test, y_predicted)
-    print(cm)
+    # cm = metrics.confusion_matrix(y_test, y_predicted)
+    # print(cm)
 
-    import matplotlib.pyplot as plt
-    plt.matshow(cm)
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # plt.matshow(cm)
+    # plt.show()

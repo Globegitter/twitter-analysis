@@ -5,13 +5,12 @@ import sys
 from sklearn.preprocessing import StandardScaler
 
 
-def load_data():
+def load_data(max_json_objects=10):
     file_path = '../exampletweets_2.txt'
     #file_path = 'format_example.txt'
     if len(sys.argv) > 2:
         file_path = sys.argv[2]
 
-    max_json_objects = 10
     nr_json_objects = 0
     nr_open_brackets = 0
     # nr_close_brackets = 0
@@ -53,7 +52,12 @@ def load_data():
         for column in ['Followers']:
             df[column] = scaler.fit(df[column]).transform(df[column])
 
-        print(df)
+        # print(df)
+
+    # intel_tweets = df[df['Symbol'] == 'intel']['Text'].values
+    # print(intel_tweets)
+
+    return df
 
     # data = json.load(f)
     # data = pandas.read_json('single_json.txt')
