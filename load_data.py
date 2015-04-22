@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import json as js
 import sys
+from sklearn.preprocessing import StandardScaler
 
 
 def load_data():
@@ -46,7 +47,11 @@ def load_data():
             tweets_list.append(assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper))
 
         tweets_list = [tweet for tweet in tweets_list if tweet is not None]
-        df = pd.DataFrame(tweets_list, columns=['Date', 'Symbol', 'Text', 'Retweet_Count', 'Favorite_Count'])
+        df = pd.DataFrame(tweets_list, columns=['Date', 'Symbol', 'Text', 'Followers'])
+
+        scaler = StandardScaler()
+        for column in ['Followers']:
+            df[column] = scaler.fit(df[column]).transform(df[column])
 
         print(df)
 
@@ -57,4 +62,4 @@ def load_data():
 def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
     for keyword in keywords_list:
         if keyword in tweet['text']:
-            return (pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['retweet_count'], tweet['favorite_count'])
+            return (pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['user']['followers_count'])
