@@ -78,7 +78,9 @@ if __name__ == "__main__":
     #     print(df)
     #     df['text_sentiment'] = prediction
 
-    print(tweets_df[tweets_df['Symbol'] == 'intel'])
+    intel_df = tweets_df[tweets_df['Symbol'] == 'intel']
+    intel_df['Sentiment_Score'] = prediction
+    print(intel_df)
     # print('prediction', prediction.shape)
     # print('len2', tweets_df[tweets_df['Symbol'] == 'intel']['Text'].values.shape)
     # grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1)
