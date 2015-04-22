@@ -5,8 +5,8 @@ import sys
 
 
 def load_data():
-    #file_path = '../exampletweets_2.txt'
-    file_path = 'format_example.txt'
+    file_path = '../exampletweets_2.txt'
+    #file_path = 'format_example.txt'
     if len(sys.argv) > 2:
         file_path = sys.argv[2]
 
@@ -32,14 +32,10 @@ def load_data():
             if nr_open_brackets == 0:
                 nr_json_objects += 1
 
-                print(chars_read)
                 tweet = js.loads(chars_read)
                 chars_read = ''
 
-                if len(tweet) > 0:
-                    tweets.append(tweet)
-
-        print('nr of json objects', nr_json_objects)
+                tweets.append(tweet)
 
         keywords_list = ['Intel', 'intel', 'IBM', 'ibm', 'Goldman', 'goldman', '$INTC', '$GS', '$IBM', '$intc', '$gs', '$ibm']
         stock_to_keyword_mapper = {'Intel': 'intel', 'intel': 'intel', 'IBM': 'ibm', 'ibm': 'ibm', 'Goldman': 'goldman', 'goldman': 'goldman', '$INTC' :'intel', '$GS': 'goldman', '$IBM': 'ibm', '$intc': 'intel', '$gs': 'goldman', '$ibm': 'ibm'}
@@ -49,7 +45,8 @@ def load_data():
         for tweet in tweets:
             tweets_list.append(assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper))
 
-        df = pd.DataFrame(tweets_list, columns=['Symbol', 'Text', 'Retweet_Count', 'Favorite_Count'])
+        tweets_list = [tweet for tweet in tweets_list if tweet is not None]
+        df = pd.DataFrame(tweets_list, columns=['Date', 'Symbol', 'Text', 'Retweet_Count', 'Favorite_Count'])
 
         print(df)
 
@@ -60,4 +57,4 @@ def load_data():
 def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
     for keyword in keywords_list:
         if keyword in tweet['text']:
-            return (stock_to_keyword_mapper[keyword], tweet['text'], tweet['retweet_count'], tweet['favorite_count'])
+            return (pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['retweet_count'], tweet['favorite_count'])
