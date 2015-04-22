@@ -19,6 +19,9 @@ import random
 from sklearn import metrics
 from load_data import load_data
 from pandas import Series
+from sklearn import svm
+from sklearn.linear_model import LogisticRegression
+
 
 
 if __name__ == "__main__":
@@ -44,6 +47,10 @@ if __name__ == "__main__":
     intel_tweets = tweets_df[tweets_df['Symbol'] == 'intel']['Text'].values
     y = [round(random.uniform(0.1, 1.0), 10) for i in intel_tweets]
 
+
+    clf = svm.SVC(kernel='linear')
+    clf2 = svm.SVC(kernel='sigmoid')
+    logreg = LogisticRegression(C=1000)
     # TASK: Build a vectorizer / classifier pipeline that filters out tokens
     # that are too rare or too frequent
     pipeline = Pipeline([
@@ -64,11 +71,12 @@ if __name__ == "__main__":
     print('fit_val', fit_val)
     prediction = pipeline.predict(intel_tweets)
 
-    # tweets_df[tweets_df['Symbol'] == 'intel']['text_prediction'] = Series(prediction, index=tweets_df[tweets_df['Symbol'] == 'intel'].index)
+    # tweets_df[tweets_df['Symbol'] == 'intel']['text_prediction'] =
+    # Series(prediction, index=tweets_df[tweets_df['Symbol'] == 'intel'].index)
 
     # for df in tweets_df[tweets_df['Symbol'] == 'intel']:
     #     print(df)
-        # df['text_sentiment'] = prediction
+    #     df['text_sentiment'] = prediction
 
     print(tweets_df[tweets_df['Symbol'] == 'intel'])
     # print('prediction', prediction.shape)
