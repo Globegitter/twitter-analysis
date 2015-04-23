@@ -4,6 +4,7 @@ import json as js
 import sys
 from sklearn.preprocessing import StandardScaler
 import statsmodels.formula.api as sm
+import timeit
 
 
 def load_data(max_json_objects=10):
@@ -13,30 +14,29 @@ def load_data(max_json_objects=10):
         file_path = sys.argv[2]
 
     nr_json_objects = 0
-    nr_open_brackets = 0
-    # nr_close_brackets = 0
     chars_read = ''
     tweets = []
 
-    with open(file_path, "r", encoding="utf-8") as file:
+    with open(file_path, "r", encoding="ISO-8859-1") as file:
+
         while nr_json_objects < max_json_objects:
-            c = file.read(1)
+            c = file.read(10000)
             if not c:
                 break
-            if c == '{':
-                nr_open_brackets += 1
-            if c == '}':
-                nr_open_brackets -= 1
 
             chars_read += c
+            json_end = chars_read.find('}{')
 
-            if nr_open_brackets == 0:
+            while json_end > -1:
                 nr_json_objects += 1
 
-                tweet = js.loads(chars_read)
-                chars_read = ''
+                chars_read_tw1 = chars_read[0:json_end + 1]
 
+                tweet = js.loads(chars_read_tw1)
                 tweets.append(tweet)
+
+                chars_read = chars_read[chars_read.find('}{') + 1:]
+                json_end = chars_read.find('}{')
 
         keywords_list = ['Intel', 'intel', 'IBM', 'ibm', 'Goldman', 'goldman', '$INTC', '$GS', '$IBM', '$intc', '$gs', '$ibm']
         stock_to_keyword_mapper = {'Intel': 'intel', 'intel': 'intel', 'IBM': 'ibm', 'ibm': 'ibm', 'Goldman': 'goldman', 'goldman': 'goldman', '$INTC' :'intel', '$GS': 'goldman', '$IBM': 'ibm', '$intc': 'intel', '$gs': 'goldman', '$ibm': 'ibm'}

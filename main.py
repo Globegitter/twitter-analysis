@@ -1,10 +1,9 @@
 from load_data import load_data
 import sentiment
-import sys
 
 
 def main():
-    tweet_df = load_data(1000)
+    tweet_df = load_data(10000)
     company_names = ['intel', 'ibm', 'goldman']
     sentiment_types = ['linear', 'sigmoid', 'logistic']
     for company in company_names:
