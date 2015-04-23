@@ -38,7 +38,7 @@ def aggregate_to_daily_summaries(sentiment_data):
 
 
 def main():
-    tweet_df = load_data(1000)
+    tweet_df = load_data(100000)
     company_names = ['intel', 'ibm', 'goldman']
     sentiment_types = ['linear', 'sigmoid', 'logistic']
     for company in company_names:
