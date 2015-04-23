@@ -3,6 +3,7 @@ import pandas as pd
 import json as js
 import sys
 from sklearn.preprocessing import StandardScaler
+import statsmodels.formula.api as sm
 
 
 def load_data(max_json_objects=10):
@@ -59,16 +60,14 @@ def load_data(max_json_objects=10):
 
     prices_df_original = pd.read_csv('prices_data.csv').set_index('Date')
 
-    start_date = min(df['Date'])
-    end_date = max(df['Date'])
+    intel_results = regression_agent(df, prices_df_original, 'intel')
 
-    prices_df = prices_df_original[start_date:end_date]
-
-    return df
+    print(intel_results)
 
     # data = json.load(f)
     # data = pandas.read_json('single_json.txt')
     # print(data)
+
 
 def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
     for keyword in keywords_list:
@@ -76,5 +75,16 @@ def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
             return (pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['user']['followers_count'])
 
 
-def regression_agent(sentiment_df, prices_df):
-    pass
+def regression_agent(sentiment_data, prices_data, symbol):
+    sentiment_df = sentiment_data[sentiment_data['Symbol'] == symbol]
+
+    start_date = min(sentiment_df['Date'])
+    end_date = max(sentiment_df['Date'])
+
+    prices_df = prices_data[start_date:end_date]
+
+    y = prices_df[symbol]
+    X = sentiment_df[['Followers', 'Sentiment_Score']]
+    X['ones'] = np.ones((len(sentiment_df), ))
+    result = sm.OLS(y, X).fit()
+    return result.summary()
