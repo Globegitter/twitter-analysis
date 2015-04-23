@@ -3,6 +3,8 @@ import pandas as pd
 import json as js
 import sys
 from sklearn.preprocessing import StandardScaler
+import statsmodels.formula.api as sm
+import timeit
 
 
 def load_data(max_json_objects=10):
@@ -12,30 +14,29 @@ def load_data(max_json_objects=10):
         file_path = sys.argv[2]
 
     nr_json_objects = 0
-    nr_open_brackets = 0
-    # nr_close_brackets = 0
     chars_read = ''
     tweets = []
 
-    with open(file_path, "r", encoding="utf-8") as file:
+    with open(file_path, "r", encoding="ISO-8859-1") as file:
+
         while nr_json_objects < max_json_objects:
-            c = file.read(1)
+            c = file.read(10000)
             if not c:
                 break
-            if c == '{':
-                nr_open_brackets += 1
-            if c == '}':
-                nr_open_brackets -= 1
 
             chars_read += c
+            json_end = chars_read.find('}{')
 
-            if nr_open_brackets == 0:
+            while json_end > -1:
                 nr_json_objects += 1
 
-                tweet = js.loads(chars_read)
-                chars_read = ''
+                chars_read_tw1 = chars_read[0:json_end + 1]
 
+                tweet = js.loads(chars_read_tw1)
                 tweets.append(tweet)
+
+                chars_read = chars_read[chars_read.find('}{') + 1:]
+                json_end = chars_read.find('}{')
 
         keywords_list = ['Intel', 'intel', 'IBM', 'ibm', 'Goldman', 'goldman', '$INTC', '$GS', '$IBM', '$intc', '$gs', '$ibm']
         stock_to_keyword_mapper = {'Intel': 'intel', 'intel': 'intel', 'IBM': 'ibm', 'ibm': 'ibm', 'Goldman': 'goldman', 'goldman': 'goldman', '$INTC' :'intel', '$GS': 'goldman', '$IBM': 'ibm', '$intc': 'intel', '$gs': 'goldman', '$ibm': 'ibm'}
@@ -57,7 +58,11 @@ def load_data(max_json_objects=10):
     # intel_tweets = df[df['Symbol'] == 'intel']['Text'].values
     # print(intel_tweets)
 
-    return df
+    prices_df_original = pd.read_csv('prices_data.csv').set_index('Date')
+
+    intel_regressor = regression_agent(df, prices_df_original, 'intel')
+
+    print(intel_regressor.summary())
 
     # data = json.load(f)
     # data = pandas.read_json('single_json.txt')
@@ -68,3 +73,24 @@ def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
     for keyword in keywords_list:
         if keyword in tweet['text']:
             return (pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['user']['followers_count'])
+
+
+def regression_agent(sentiment_data, prices_data, symbol):
+    sentiment_df = sentiment_data[sentiment_data['Symbol'] == symbol]
+
+    sentiment_df = aggregate_to_daily_summaries(sentiment_df)
+
+    start_date = min(sentiment_df['Date'])
+    end_date = max(sentiment_df['Date'])
+
+    prices_df = prices_data[start_date:end_date]
+
+    y = prices_df[symbol]
+    X = sentiment_df[['Followers', 'Sentiment_Score']]
+    X['ones'] = np.ones((len(sentiment_df), ))
+    result_object = sm.OLS(y, X).fit()
+    return result_object
+
+
+def aggregate_to_daily_summaries(sentiment_data):
+    return sentiment_data.groupby('Date').aggregate(np.mean)
