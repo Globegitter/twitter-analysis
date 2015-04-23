@@ -60,9 +60,9 @@ def load_data(max_json_objects=10):
 
     prices_df_original = pd.read_csv('prices_data.csv').set_index('Date')
 
-    intel_results = regression_agent(df, prices_df_original, 'intel')
+    intel_regressor = regression_agent(df, prices_df_original, 'intel')
 
-    print(intel_results)
+    print(intel_regressor.summary())
 
     # data = json.load(f)
     # data = pandas.read_json('single_json.txt')
@@ -86,5 +86,5 @@ def regression_agent(sentiment_data, prices_data, symbol):
     y = prices_df[symbol]
     X = sentiment_df[['Followers', 'Sentiment_Score']]
     X['ones'] = np.ones((len(sentiment_df), ))
-    result = sm.OLS(y, X).fit()
-    return result.summary()
+    result_object = sm.OLS(y, X).fit()
+    return result_object
