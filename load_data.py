@@ -78,6 +78,8 @@ def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
 def regression_agent(sentiment_data, prices_data, symbol):
     sentiment_df = sentiment_data[sentiment_data['Symbol'] == symbol]
 
+    sentiment_df = aggregate_to_daily_summaries(sentiment_df)
+
     start_date = min(sentiment_df['Date'])
     end_date = max(sentiment_df['Date'])
 
@@ -88,3 +90,7 @@ def regression_agent(sentiment_data, prices_data, symbol):
     X['ones'] = np.ones((len(sentiment_df), ))
     result_object = sm.OLS(y, X).fit()
     return result_object
+
+
+def aggregate_to_daily_summaries(sentiment_data):
+    return sentiment_data.groupby('Date').aggregate(np.mean)
