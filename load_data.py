@@ -57,6 +57,13 @@ def load_data(max_json_objects=10):
     # intel_tweets = df[df['Symbol'] == 'intel']['Text'].values
     # print(intel_tweets)
 
+    prices_df_original = pd.read_csv('prices_data.csv').set_index('Date')
+
+    start_date = min(df['Date'])
+    end_date = max(df['Date'])
+
+    prices_df = prices_df_original[start_date:end_date]
+
     return df
 
     # data = json.load(f)
@@ -67,3 +74,7 @@ def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
     for keyword in keywords_list:
         if keyword in tweet['text']:
             return (pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['user']['followers_count'])
+
+
+def regression_agent(sentiment_df, prices_df):
+    pass
