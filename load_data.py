@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 
 def load_data(max_json_objects=10):
     file_path = '../exampletweets_2.txt'
-    #file_path = 'format_example.txt'
+    # file_path = 'format_example.txt'
     if len(sys.argv) > 2:
         file_path = sys.argv[2]
 
@@ -63,7 +63,9 @@ def load_data(max_json_objects=10):
     # data = pandas.read_json('single_json.txt')
     # print(data)
 
+
 def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
     for keyword in keywords_list:
         if keyword in tweet['text']:
             return (pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['user']['followers_count'])
+
