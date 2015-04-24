@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.formula.api as sm
 import datetime as dt
-import statistics
+from graphs import plot_data
 
 
 def regression_agent(sentiment_data, prices_data, symbol):
@@ -16,13 +16,14 @@ def regression_agent(sentiment_data, prices_data, symbol):
 
     sentiment_df = sentiment_df[['Date', 'Weighted_Sentiment_Score']]
 
-    sentiment_df = aggregate_to_daily_summaries(sentiment_df)
+    sentiment_df, unique_dates = aggregate_to_daily_summaries(sentiment_df)
 
     prices_data = prices_data.iloc[::-1]
 
     prices_df = prices_data[symbol]
     prices_df = prices_data[prices_data['Date'] >= start_date]
     prices_df = prices_df[prices_data['Date'] <= end_date].set_index('Date')
+    # print(prices_df)
 
     reg_data = prices_df.join(sentiment_df)
 
@@ -30,17 +31,23 @@ def regression_agent(sentiment_data, prices_data, symbol):
     X = reg_data[['Weighted_Sentiment_Score']]
     X['ones'] = np.ones((len(sentiment_df), ))
     result_object = sm.OLS(y, X).fit()
-    return result_object
+    return result_object, unique_dates
+
+
+def unique(seq):
+    seen = set()
+    return [x for x in seq if x not in seen and not seen.add(x)]
 
 
 def aggregate_to_daily_summaries(sentiment_data):
-    sentiment_data['just_date'] = [x.date() for x in sentiment_data['Date']]
-    return sentiment_data.groupby('just_date').aggregate(np.mean)
+    dates = [x.date() for x in sentiment_data['Date']]
+    sentiment_data['just_date'] = dates
+    return sentiment_data.groupby('just_date').aggregate(np.mean), unique(dates)
 
 
-@profile
+# @profile
 def main():
-    tweet_df = load_data(100000)
+    tweet_df = load_data(10000)
     # sys.exit(0)
     company_names = ['intel', 'ibm', 'goldman']
     sentiment_types = ['linear', 'sigmoid', 'logistic']
@@ -50,30 +57,35 @@ def main():
     for company in ['intel']:  # company_names
         tweets = sentiment.get_company_tweets(tweet_df, company)
 
-        # sentiment_predictions = sentiment.analysis_multi(tweets, sentiment_types[0])
-        sentiment_predictions = sentiment.analysis(tweets, sentiment_types[0])
-        # print('sentiment_predictions multi', sentiment_predictions)
-        # print('length', len(sentiment_predictions))
-        # print('mean', statistics.mean(sentiment_predictions))
-        # print('median', statistics.median(sentiment_predictions))
+        sentiment_predictions = sentiment.analysis_multi(tweets, sentiment_types[0])
+        print('number of tweets for intel', len(sentiment_predictions))
+        # sentiment_predictions = sentiment.analysis(tweets, sentiment_types[0])
 
-        # sentiment_predictions2 = sentiment.analysis(tweets, sentiment_types[0])
-        # print('sentiment_predictions', sentiment_predictions2)
-        # print('length', len(sentiment_predictions2))
-        # print('mean', statistics.mean(sentiment_predictions2))
-        # print('median', statistics.median(sentiment_predictions2))
         tweet_df = sentiment.add_to_dataframe(tweet_df, company, sentiment_predictions)
 
     print("Sentiment Analysis completed.")
 
     prices_df_original = pd.read_csv('prices_data.csv')
-    prices_df_original['Date'] = [dt.datetime.strptime(x, '%d/%m/%Y') for x in prices_df_original['Date']]
+    dow_jone_dates = [dt.datetime.strptime(x, '%d/%m/%Y') for x in prices_df_original['Date']]
+    prices_df_original['Date'] = dow_jone_dates
+    # print('last two', prices_df_original)
+    # print('last two', prices_df_original['intel'].values.tolist()[-2:])
+    # print(dow_jone_dates[-2:])
 
     tweet_df['Weighted_Sentiment_Score'] = tweet_df['Sentiment_Score'] * tweet_df['Followers']
 
-    intel_regressor = regression_agent(tweet_df, prices_df_original, 'intel')
+    intel_regressor, dates = regression_agent(tweet_df, prices_df_original, 'intel')
+    prediction = intel_regressor.predict()
 
-    print(intel_regressor.summary())
+    prediction_data = list(zip(dates, prediction))
+    dow_jone_dates = dow_jone_dates[-len(dates):]
+    dow_jone_dates = dow_jone_dates[::-1]
+    intel_prices = prices_df_original['intel'].values.tolist()[-len(dates):]
+    intel_prices = intel_prices[::-1]
+    
+    dow_jones_data = list(zip(dow_jone_dates, intel_prices))
+
+    plot_data(prediction_data, dow_jones_data)
 
 
 if __name__ == '__main__':
