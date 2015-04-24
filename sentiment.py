@@ -9,20 +9,15 @@ positive or negative.
 
 import sys
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
-from sklearn.datasets import load_files
-from sklearn.cross_validation import train_test_split
 import random
-from sklearn import metrics
-from load_data import load_data
-from pandas import Series
 from sklearn import svm
 from sklearn.linear_model import LogisticRegression
 import numpy as np
+from joblib import Parallel, delayed
 
 
+# @profile
 def analysis(tweets, method='linear'):
 
     classification = svm.SVC(kernel='linear')
@@ -39,10 +34,18 @@ def analysis(tweets, method='linear'):
 
     y = [round(random.uniform(0.0, 1.0)) for tweet in tweets]
 
-    pipeline.set_params(vect__ngram_range=(1, 2)).fit(tweets, y)
+    pipeline.set_params(vect__ngram_range=(1, 2))
+    pipeline.fit(tweets, y)
     sentiment_predictions = pipeline.predict(tweets)
 
     return sentiment_predictions
+
+
+def chunks(l, number):
+    """ Yield successive n-sized chunks from l.
+    """
+    for i in range(0, len(l), number):
+        yield l[i:i + number]
 
 
 def get_company_tweets(df, name):

@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import statsmodels.formula.api as sm
 import datetime as dt
+import collections
+import functools
 
 
 def regression_agent(sentiment_data, prices_data, symbol):
@@ -37,6 +39,10 @@ def aggregate_to_daily_summaries(sentiment_data):
     return sentiment_data.groupby('just_date').aggregate(np.mean)
 
 
+# def profile():
+#     pass
+
+# @profile
 def main():
     tweet_df = load_data(50000)
     # sys.exit(0)
@@ -48,6 +54,8 @@ def main():
     for company in ['intel']:  # company_names
         tweets = sentiment.get_company_tweets(tweet_df, company)
         sentiment_predictions = sentiment.analysis(tweets, sentiment_types[0])
+        print('sentiment_predictions', sentiment_predictions[0:10])
+        print('length', len(sentiment_predictions))
         tweet_df = sentiment.add_to_dataframe(tweet_df, company, sentiment_predictions)
 
     print("Sentiment Analysis completed.")

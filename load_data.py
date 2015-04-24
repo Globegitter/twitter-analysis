@@ -3,6 +3,7 @@ import ujson
 import sys
 from sklearn.preprocessing import StandardScaler
 from joblib import Parallel, delayed
+from memoized import memoized
 
 
 def load_data(max_json_objects=10):
@@ -39,7 +40,12 @@ def load_data(max_json_objects=10):
         keywords_list = ['Intel', 'intel', 'IBM', 'ibm', 'Goldman', 'goldman', '$INTC', '$GS', '$IBM', '$intc', '$gs', '$ibm']
         stock_to_keyword_mapper = {'Intel': 'intel', 'intel': 'intel', 'IBM': 'ibm', 'ibm': 'ibm', 'Goldman': 'goldman', 'goldman': 'goldman', '$INTC' :'intel', '$GS': 'goldman', '$IBM': 'ibm', '$intc': 'intel', '$gs': 'goldman', '$ibm': 'ibm'}
 
-        tweets_list = Parallel(n_jobs=4)(delayed(assign_stock_to_tweet)(tweet, keywords_list, stock_to_keyword_mapper) for tweet in tweets)
+        tweets_list = Parallel(n_jobs=4, backend="threading")(delayed(assign_stock_to_tweet)(tweet, keywords_list, stock_to_keyword_mapper) for tweet in tweets)
+
+        # tweets_list = []
+        #
+        # for tweet in tweets:
+        #     tweets_list.append(assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper))
 
         tweets_list = [tweet for tweet in tweets_list if tweet is not None]
         df = pd.DataFrame(tweets_list, columns=['Date', 'Symbol', 'Text', 'Followers'])
@@ -63,4 +69,15 @@ def load_data(max_json_objects=10):
 def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
     for keyword in keywords_list:
         if keyword in tweet['text']:
-            return pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['user']['followers_count']
+            # first = pd.to_datetime(tweet['created_at'])
+            first = to_timestamp(tweet['created_at'])
+            # first = pd.Timestamp(tweet['created_at'])
+            second = stock_to_keyword_mapper[keyword]
+            third = tweet['text']
+            fourth = tweet['user']['followers_count']
+            return first, second, third, fourth
+
+
+@memoized
+def to_timestamp(date_time):
+    return pd.Timestamp(date_time)
