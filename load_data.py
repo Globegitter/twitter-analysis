@@ -1,10 +1,8 @@
-import numpy as np
 import pandas as pd
-import json as js
+import ujson
 import sys
 from sklearn.preprocessing import StandardScaler
-import statsmodels.formula.api as sm
-import timeit
+from joblib import Parallel, delayed
 
 
 def load_data(max_json_objects=10):
@@ -20,7 +18,7 @@ def load_data(max_json_objects=10):
     with open(file_path, "r", encoding="ISO-8859-1") as file:
 
         while nr_json_objects < max_json_objects:
-            c = file.read(10000)
+            c = file.read(100000)
             if not c:
                 break
 
@@ -31,20 +29,17 @@ def load_data(max_json_objects=10):
                 nr_json_objects += 1
 
                 chars_read_tw1 = chars_read[0:json_end + 1]
-
-                tweet = js.loads(chars_read_tw1)
+                # print(chars_read_tw1)
+                tweet = ujson.loads(chars_read_tw1)
                 tweets.append(tweet)
 
-                chars_read = chars_read[chars_read.find('}{') + 1:]
+                chars_read = chars_read[json_end + 1:]
                 json_end = chars_read.find('}{')
 
         keywords_list = ['Intel', 'intel', 'IBM', 'ibm', 'Goldman', 'goldman', '$INTC', '$GS', '$IBM', '$intc', '$gs', '$ibm']
         stock_to_keyword_mapper = {'Intel': 'intel', 'intel': 'intel', 'IBM': 'ibm', 'ibm': 'ibm', 'Goldman': 'goldman', 'goldman': 'goldman', '$INTC' :'intel', '$GS': 'goldman', '$IBM': 'ibm', '$intc': 'intel', '$gs': 'goldman', '$ibm': 'ibm'}
 
-        tweets_list = []
-
-        for tweet in tweets:
-            tweets_list.append(assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper))
+        tweets_list = Parallel(n_jobs=4)(delayed(assign_stock_to_tweet)(tweet, keywords_list, stock_to_keyword_mapper) for tweet in tweets)
 
         tweets_list = [tweet for tweet in tweets_list if tweet is not None]
         df = pd.DataFrame(tweets_list, columns=['Date', 'Symbol', 'Text', 'Followers'])
@@ -68,4 +63,4 @@ def load_data(max_json_objects=10):
 def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
     for keyword in keywords_list:
         if keyword in tweet['text']:
-            return (pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['user']['followers_count'])
+            return pd.to_datetime(tweet['created_at']), stock_to_keyword_mapper[keyword], tweet['text'], tweet['user']['followers_count']

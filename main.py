@@ -38,18 +38,19 @@ def aggregate_to_daily_summaries(sentiment_data):
 
 
 def main():
-    tweet_df = load_data(1000000)
+    tweet_df = load_data(50000)
+    # sys.exit(0)
     company_names = ['intel', 'ibm', 'goldman']
     sentiment_types = ['linear', 'sigmoid', 'logistic']
 
-    print("Data load completed")
+    print("Data load completed.")
 
-    for company in ['intel']:#company_names
+    for company in ['intel']:  # company_names
         tweets = sentiment.get_company_tweets(tweet_df, company)
         sentiment_predictions = sentiment.analysis(tweets, sentiment_types[0])
         tweet_df = sentiment.add_to_dataframe(tweet_df, company, sentiment_predictions)
 
-    print("Sentiment Analysis completed")
+    print("Sentiment Analysis completed.")
 
     prices_df_original = pd.read_csv('prices_data.csv')
     prices_df_original['Date'] = [dt.datetime.strptime(x, '%d/%m/%Y') for x in prices_df_original['Date']]
