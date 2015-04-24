@@ -20,6 +20,14 @@ from joblib import Parallel, delayed
 # @profile
 def analysis(tweets, method='linear'):
 
+    is_dict = False
+    key = -1
+    if type(tweets) is dict:
+        is_dict = True
+        for keys in tweets.keys():
+            key = keys
+        tweets = tweets[key]
+
     classification = svm.SVC(kernel='linear')
 
     if method == 'sigmoid':
@@ -38,14 +46,41 @@ def analysis(tweets, method='linear'):
     pipeline.fit(tweets, y)
     sentiment_predictions = pipeline.predict(tweets)
 
+    if is_dict:
+        return {key: sentiment_predictions}
+
+    return sentiment_predictions
+
+
+def analysis_multi(tweets, method='linear', nr_jobs=4):
+    tweet_chunks = chunks(tweets, nr_jobs)
+
+    tweets_dict = {}
+
+    for i in range(nr_jobs):
+        tweets_dict[i] = tweet_chunks[i]
+
+    sentiment_predictions_dicts = Parallel(n_jobs=nr_jobs)(delayed(analysis)({key: tweets_dict[key]}, method) for key in tweets_dict)
+    sentiment_predictions = []
+    prev_key = -1
+
+    for sentiment_dict in sentiment_predictions_dicts:
+        for key in sentiment_dict.keys():
+            if prev_key < key:
+                sentiment_predictions.extend(sentiment_dict[key])
+            else:
+                # prepend
+                sentiment_predictions[:0] = sentiment_dict[key]
+            prev_key = key
+
     return sentiment_predictions
 
 
 def chunks(l, number):
-    """ Yield successive n-sized chunks from l.
+    """ Yield n chunks from l.
     """
-    for i in range(0, len(l), number):
-        yield l[i:i + number]
+    k, m = len(l) / number, len(l) % number
+    return [l[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(number)]
 
 
 def get_company_tweets(df, name):
