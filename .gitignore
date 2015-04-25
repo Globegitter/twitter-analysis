@@ -9,6 +9,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+main.py.lprof
 .Python
 env/
 build/

@@ -32,7 +32,12 @@ def load_data(max_json_objects=10):
                 chars_read_tw1 = chars_read[0:json_end + 1]
                 # print(chars_read_tw1)
                 tweet = ujson.loads(chars_read_tw1)
-                tweets.append(tweet)
+
+                # remove the timestamp from the field since we don't need it
+                tweet['created_at'] = tweet['created_at'][0:10].strip() + ' ' + tweet['created_at'][-4:].strip()
+
+                if date_exists_in_csv(tweet['created_at']):
+                    tweets.append(tweet)
 
                 chars_read = chars_read[json_end + 1:]
                 json_end = chars_read.find('}{')
@@ -54,7 +59,7 @@ def load_data(max_json_objects=10):
         for column in ['Followers']:
             df[column] = scaler.fit(df[column]).transform(df[column])
 
-        # print(df)
+        print(df)
 
     # intel_tweets = df[df['Symbol'] == 'intel']['Text'].values
     # print(intel_tweets)
@@ -70,6 +75,7 @@ def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
     for keyword in keywords_list:
         if keyword in tweet['text']:
             # first = pd.to_datetime(tweet['created_at'])
+            # created_at format: Mon Jan 13 20:01:46 +0000 2014
             first = to_timestamp(tweet['created_at'])
             # first = pd.Timestamp(tweet['created_at'])
             second = stock_to_keyword_mapper[keyword]
@@ -81,3 +87,18 @@ def assign_stock_to_tweet(tweet, keywords_list, stock_to_keyword_mapper):
 @memoized
 def to_timestamp(date_time):
     return pd.Timestamp(date_time)
+
+
+@memoized
+def date_exists_in_csv(date_time):
+    prices_df_original = pd.read_csv('prices_data.csv')
+    for date in prices_df_original['Date'].values.tolist()[::-1]:
+        date = pd.Timestamp(date)
+        read_date = pd.Timestamp(date_time)
+        if (read_date.year == date.year and read_date.month == date.month and
+                read_date.day == date.day):
+            break
+        elif (read_date.year == date.year and read_date.month == date.month and
+                read_date.day < date.day):
+            return False
+    return True
