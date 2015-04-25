@@ -17,6 +17,7 @@ def regression_agent(sentiment_data, prices_data, symbol):
     sentiment_df = sentiment_df[['Date', 'Weighted_Sentiment_Score']]
 
     sentiment_df, unique_dates = aggregate_to_daily_summaries(sentiment_df)
+    # print(unique_dates)
 
     prices_data = prices_data.iloc[::-1]
 
@@ -58,46 +59,51 @@ def aggregate_to_daily_summaries(sentiment_data):
 # @profile
 def main():
     print('Loading data now...')
-    tweet_df = load_data(200000)
+    tweet_df = load_data(10000000)
     company_names = ['intel', 'ibm', 'goldman']
     sentiment_types = ['linear', 'sigmoid', 'logistic']
+    plot_labels = []
+    plot_args = []
 
-    print("Data load completed.")
+    print("Data load completed. Number of tweets in total: " + str(len(tweet_df)))
 
-    for company in ['intel']:  # company_names
+    prices_df_original = pd.read_csv('prices_data.csv')
+    dow_jone_dates = [dt.datetime.strptime(x, '%d/%m/%Y') for x in prices_df_original['Date']]
+    dow_jone_dates = dow_jone_dates[::-1]
+    prices_df_original['Date'] = dow_jone_dates
+
+    for company in company_names:
+        print(tweet_df[tweet_df['Symbol'] == company].values)
         tweets = sentiment.get_company_tweets(tweet_df, company)
+        print("Number of Tweets for " + company + ": " + str(len(tweets)))
 
-        sentiment_predictions = sentiment.analysis_multi(tweets, sentiment_types[0])
-        print('number of tweets for intel', len(sentiment_predictions))
+        sentiment_predictions = sentiment.analysis_multi(tweets, sentiment_types[2])
         # sentiment_predictions = sentiment.analysis(tweets, sentiment_types[0])
 
         tweet_df = sentiment.add_to_dataframe(tweet_df, company, sentiment_predictions)
 
-    print("Sentiment Analysis completed.")
+        print("Sentiment Analysis completed for " + company + ".")
 
-    prices_df_original = pd.read_csv('prices_data.csv')
-    dow_jone_dates = [dt.datetime.strptime(x, '%d/%m/%Y') for x in prices_df_original['Date']]
-    prices_df_original['Date'] = dow_jone_dates
-    print(prices_df_original)
-    # print('last two', prices_df_original)
-    # print('last two', prices_df_original['intel'].values.tolist()[-2:])
-    # print(dow_jone_dates[-2:])
+        tweet_df['Weighted_Sentiment_Score'] = tweet_df['Sentiment_Score'] * tweet_df['Followers']
 
-    tweet_df['Weighted_Sentiment_Score'] = tweet_df['Sentiment_Score'] * tweet_df['Followers']
+        company_regressor, dates = regression_agent(tweet_df, prices_df_original, company)
+        prediction = company_regressor.predict()
 
-    intel_regressor, dates = regression_agent(tweet_df, prices_df_original, 'intel')
-    prediction = intel_regressor.predict()
-    print(prediction)
+        prediction_data = list(zip(dates, prediction))
+        # print(dow_jone_dates)
+        dow_jone_dates_company = dates
+        company_prices = prices_df_original[company].values.tolist()[-len(dates):]
+        company_prices = company_prices[::-1]
 
-    prediction_data = list(zip(dates, prediction))
-    dow_jone_dates = dow_jone_dates[-len(dates):]
-    dow_jone_dates = dow_jone_dates[::-1]
-    intel_prices = prices_df_original['intel'].values.tolist()[-len(dates):]
-    intel_prices = intel_prices[::-1]
+        dow_jones_data = list(zip(dow_jone_dates_company, company_prices))
 
-    dow_jones_data = list(zip(dow_jone_dates, intel_prices))
+        plot_labels.extend([company + ' P', company + ' DJ'])
+        plot_args.extend([prediction_data, dow_jones_data])
+        print("Predictions completed and stored for " + company + ".")
 
-    plot_data(prediction_data, dow_jones_data)
+    # print(plot_args)
+
+    plot_data(plot_labels, *tuple(plot_args))
 
 
 if __name__ == '__main__':

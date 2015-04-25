@@ -19,7 +19,7 @@ def load_data(max_json_objects=10):
     with open(file_path, "r", encoding="ISO-8859-1") as file:
 
         while nr_json_objects < max_json_objects:
-            c = file.read(100000)
+            c = file.read(1000000)
             if not c:
                 break
 
@@ -59,7 +59,6 @@ def load_data(max_json_objects=10):
         for column in ['Followers']:
             df[column] = scaler.fit(df[column]).transform(df[column])
 
-        print(df)
 
     # intel_tweets = df[df['Symbol'] == 'intel']['Text'].values
     # print(intel_tweets)
