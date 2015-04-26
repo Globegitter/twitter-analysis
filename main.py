@@ -58,13 +58,12 @@ def aggregate_to_daily_summaries(sentiment_data):
 
 # @profile
 def main():
-    start_time = dt.datetime.now()
+    start_time_read = dt.datetime.now()
     print('Loading data now...')
-    tweet_df = load_data(5000000)
+    tweet_df = load_data(1000000)
     company_names = ['intel', 'ibm', 'goldman']
-    sentiment_types = ['linear', 'sigmoid', 'logistic']
-    plot_labels = []
-    plot_args = []
+    sentiment_types = ['logistic', 'sigmoid', 'linear']
+    # sentiment_types = ['logistic']
 
     print("Data load completed. Number of tweets in total: " + str(len(tweet_df)))
 
@@ -72,41 +71,52 @@ def main():
     dow_jone_dates = [dt.datetime.strptime(x, '%d/%m/%Y') for x in prices_df_original['Date']]
     dow_jone_dates = dow_jone_dates[::-1]
     prices_df_original['Date'] = dow_jone_dates
+    for sentiment_type in sentiment_types:
+        plot_labels = []
+        plot_args = []
+        start_time = dt.datetime.now()
+        for company in company_names:
+            # print(tweet_df[tweet_df['Symbol'] == company].values)
+            tweets = sentiment.get_company_tweets(tweet_df, company)
+            print("Number of Tweets for " + company + ": " + str(len(tweets)))
 
-    for company in ['intel']:
-        # print(tweet_df[tweet_df['Symbol'] == company].values)
-        tweets = sentiment.get_company_tweets(tweet_df, company)
-        print("Number of Tweets for " + company + ": " + str(len(tweets)))
+            start_time_senti = dt.datetime.now()
+            sentiment_predictions = sentiment.analysis_multi(tweets, sentiment_type)
+            end_time_senti = dt.datetime.now()
+            print(str(start_time_senti), str(end_time_senti))
+            # sentiment_predictions = sentiment.analysis(tweets, sentiment_types[0])
 
-        sentiment_predictions = sentiment.analysis_multi(tweets, sentiment_types[2])
-        # sentiment_predictions = sentiment.analysis(tweets, sentiment_types[0])
+            tweet_df = sentiment.add_to_dataframe(tweet_df, company, sentiment_predictions)
 
-        tweet_df = sentiment.add_to_dataframe(tweet_df, company, sentiment_predictions)
+            print("Sentiment Analysis completed for " + company + ".")
 
-        print("Sentiment Analysis completed for " + company + ".")
+            tweet_df['Weighted_Sentiment_Score'] = tweet_df['Sentiment_Score'] * tweet_df['Followers']
 
-        tweet_df['Weighted_Sentiment_Score'] = tweet_df['Sentiment_Score'] * tweet_df['Followers']
+            company_regressor, dates = regression_agent(tweet_df, prices_df_original, company)
+            prediction = company_regressor.predict()
 
-        company_regressor, dates = regression_agent(tweet_df, prices_df_original, company)
-        prediction = company_regressor.predict()
+            prediction_data = list(zip(dates, prediction))
+            # print(dow_jone_dates)
+            dow_jone_dates_company = dates
+            company_prices = prices_df_original[company].values.tolist()[-len(dates):]
+            company_prices = company_prices[::-1]
 
-        prediction_data = list(zip(dates, prediction))
-        # print(dow_jone_dates)
-        dow_jone_dates_company = dates
-        company_prices = prices_df_original[company].values.tolist()[-len(dates):]
-        company_prices = company_prices[::-1]
+            dow_jones_data = list(zip(dow_jone_dates_company, company_prices))
 
-        dow_jones_data = list(zip(dow_jone_dates_company, company_prices))
+            plot_labels.extend([company + ' P', company + ' DJ'])
+            plot_args.extend([prediction_data, dow_jones_data])
+            print("Predictions completed and stored for " + company + ".")
+            print("Nr of days found in tweets: " + str(len(dates)) + " Nr of predicted tweets: " + str(len(prediction)))
 
-        plot_labels.extend([company + ' P', company + ' DJ'])
-        plot_args.extend([prediction_data, dow_jones_data])
-        print("Predictions completed and stored for " + company + ".")
-        print("Nr of days found in tweets: " + str(len(dates)) + " Nr of predicted tweets: " + str(len(prediction)))
-
-    # print(plot_args)
-    end_time = dt.datetime.now()
-    print('Start time: ' + str(start_time) + ', end time: ' + str(end_time))
-    plot_data(plot_labels, *tuple(plot_args))
+        # print(plot_args)
+        end_time = dt.datetime.now()
+        print('Start time for sentiment ' + sentiment_type + ': ' + str(start_time) + ', end time: ' + str(end_time))
+        print('data to plot')
+        print(plot_args)
+        print('labels')
+        print(plot_labels)
+        plot_data(plot_labels, *tuple(plot_args))
+    print('Started with reading: ' + str(start_time_read) + ', finished completely: ' + str(dt.datetime.now()))
 
 
 if __name__ == '__main__':
