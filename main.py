@@ -60,8 +60,8 @@ def aggregate_to_daily_summaries(sentiment_data):
 def main():
     start_time = dt.datetime.now()
     print('Loading data now...')
-    tweet_df = load_data(100000)
-    company_names = ['ge', 'ibm', 'goldman']
+    tweet_df = load_data(5000000)
+    company_names = ['intel', 'ibm', 'goldman']
     sentiment_types = ['linear', 'sigmoid', 'logistic']
     plot_labels = []
     plot_args = []
@@ -73,7 +73,7 @@ def main():
     dow_jone_dates = dow_jone_dates[::-1]
     prices_df_original['Date'] = dow_jone_dates
 
-    for company in ['ge']:
+    for company in ['intel']:
         # print(tweet_df[tweet_df['Symbol'] == company].values)
         tweets = sentiment.get_company_tweets(tweet_df, company)
         print("Number of Tweets for " + company + ": " + str(len(tweets)))

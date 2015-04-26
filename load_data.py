@@ -42,8 +42,8 @@ def load_data(max_json_objects=10):
                 chars_read = chars_read[json_end + 1:]
                 json_end = chars_read.find('}{')
 
-        keywords_list = ['General Electric', 'general electric', 'IBM', 'ibm', 'Goldman', 'goldman', '$GE', '$GS', '$IBM', '$GE', '$gs', '$ibm']
-        stock_to_keyword_mapper = {'General Electric': 'ge', 'general electric': 'ge', 'IBM': 'ibm', 'ibm': 'ibm', 'Goldman': 'goldman', 'goldman': 'goldman', '$GE':'ge', '$GS': 'goldman', '$IBM': 'ibm', '$ge': 'ge', '$gs': 'goldman', '$ibm': 'ibm'}
+        keywords_list = ['Intel', 'intel', 'IBM', 'ibm', 'Goldman', 'goldman', '$INTC', '$GS', '$IBM', '$intc', '$gs', '$ibm']
+        stock_to_keyword_mapper = {'Intel': 'intel', 'intel': 'intel', 'IBM': 'ibm', 'ibm': 'ibm', 'Goldman': 'goldman', 'goldman': 'goldman', '$INTC' :'intel', '$GS': 'goldman', '$IBM': 'ibm', '$intc': 'intel', '$gs': 'goldman', '$ibm': 'ibm'}
 
         tweets_list = Parallel(n_jobs=4, backend="threading")(delayed(assign_stock_to_tweet)(tweet, keywords_list, stock_to_keyword_mapper) for tweet in tweets)
 
