@@ -30,7 +30,7 @@ def regression_agent(sentiment_data, prices_data, symbol):
     prices_df = prices_df[prices_data['Date'] <= end_date].set_index('Date')
     # print(prices_df)
 
-    reg_data = prices_df.join(sentiment_df)
+    reg_data = prices_df.join(sentiment_df).dropna()
     # print(reg_data)
     # print(len(sentiment_df))
 
@@ -58,8 +58,9 @@ def aggregate_to_daily_summaries(sentiment_data):
 
 # @profile
 def main():
+    start_time = dt.datetime.now()
     print('Loading data now...')
-    tweet_df = load_data(10000000)
+    tweet_df = load_data(5000000)
     company_names = ['intel', 'ibm', 'goldman']
     sentiment_types = ['linear', 'sigmoid', 'logistic']
     plot_labels = []
@@ -72,8 +73,8 @@ def main():
     dow_jone_dates = dow_jone_dates[::-1]
     prices_df_original['Date'] = dow_jone_dates
 
-    for company in company_names:
-        print(tweet_df[tweet_df['Symbol'] == company].values)
+    for company in ['intel']:
+        # print(tweet_df[tweet_df['Symbol'] == company].values)
         tweets = sentiment.get_company_tweets(tweet_df, company)
         print("Number of Tweets for " + company + ": " + str(len(tweets)))
 
@@ -100,9 +101,11 @@ def main():
         plot_labels.extend([company + ' P', company + ' DJ'])
         plot_args.extend([prediction_data, dow_jones_data])
         print("Predictions completed and stored for " + company + ".")
+        print("Nr of days found in tweets: " + str(len(dates)) + " Nr of predicted tweets: " + str(len(prediction)))
 
     # print(plot_args)
-
+    end_time = dt.datetime.now()
+    print('Start time: ' + str(start_time) + ', end time: ' + str(end_time))
     plot_data(plot_labels, *tuple(plot_args))
 
 

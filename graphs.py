@@ -41,12 +41,12 @@ def plot_data(labels, *data_pairs):
     graph.plot(*args)
 
     # Set the xtick locations to correspond to just the dates you entered.
-    graph.set_xticks(x)
+    # graph.set_xticks(x)
 
     # Set the xtick labels to correspond to just the dates you entered.
-    graph.set_xticklabels(
-        [date.strftime("%Y-%m-%d") for (date, value) in data_pairs[0][1:]]
-        )
+    # graph.set_xticklabels(
+    #     [date.strftime("%Y-%m-%d") for (date, value) in data_pairs[0]]
+    #     )
     graph.legend(labels)
     plt.show()
 
