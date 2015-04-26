@@ -1,0 +1,9 @@
+pandas
+ujson
+numpy
+scipy
+scikit-learn
+joblib
+statsmodels
+patsy
+matplotlib
